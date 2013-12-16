@@ -1,16 +1,73 @@
+/*
+* TODO:
+*	- Modularize Viewport code: Want participants to walk up to screen and spawn viewport at touchpoint
+*	- Enable independent X and Y resizing of Viewport
+*	- Monitor/Restrict content resizing
+*
+*/
+
 import vialab.SMT.*;
 
-int screenWidth = 1440;  // 1920*3
-int screenHeight = 900; // 1080*2
-// int screenWidth = 1920*4;  // 1920*3
-// int screenHeight = 1080*2; // 1080*2
+/*******************************************************************************************/
+// 										Global Variables
+/*******************************************************************************************/
 
-PImage[][] waldo_images = new PImage[3][3];
+int screenWidth  = 1920*4;  // 1920*3
+int screenHeight = 1080*2;  // 1080*2
+
+final int TEXT_SIZE = 36;	// pixels
+
+final int DISTINCT_WALDO_IMAGES = 3;
+final int STARTING_RESOLUTION_LEVEL = 5;
+PImage[] waldo_images = new PImage[ DISTINCT_WALDO_IMAGES ];
 int curWaldoSet = 0;
 int curWaldoRes = 1;
 
 /*******************************************************************************************/
-// Init & Setup Methods
+// 										Custom Classes
+/*******************************************************************************************/
+public class Viewport extends NewTextureZone
+{
+	final String ID;
+
+	Viewport( int id, int x, int y, int width, int height, String renderer )
+	{
+		ID = "Viewport" + id;
+		super( ID, x, y, width, height, renderer );
+	}
+
+	Viewport( int id, int x, int y, int width, int height, String renderer, Zone initialContent )
+	{
+		ID = "Viewport" + id;
+		addContent( initialContent );
+		super( name, x, y, width, height, renderer );
+	}
+
+	void addContent( Zone content )
+	{
+		SMT.addChild( ID, content );
+	}
+
+}
+
+public class NewTextureZone extends TextureZone
+{
+	NewTextureZone( String name, int x, int y, int width, int height, String renderer )
+	{
+		super( name, x, y, width, height, renderer );
+	}
+
+	@Override
+	public void beginDraw()
+	{
+		super.beginDraw();
+		smooth(0);
+		textMode( MODEL );
+	}
+}
+
+/*******************************************************************************************/
+// 									Init & Setup Methods
 /*******************************************************************************************/
 //  We use init here to allow us to remove the Window's decorations
 //  before it is too late in the Setup method
@@ -22,24 +79,15 @@ public void init()
 {
 	// to make a frame not displayable, you can
 	// use frame.removeNotify()
-
 	frame.removeNotify();
 	frame.setUndecorated(true);
 
-	// addNotify, here i am not sure if you have
-	// to add notify again.
-	//  frame.addNotify();
-	// frame.removeNotify();
 	super.init();
 
 	// Pre-load Where's Waldo images
-	final int DISTINCT_WALDO_IMAGES = 3;
-	// final int NUM_RESOLUTION_LEVELS = 3;
 	for ( int i = 0; i < DISTINCT_WALDO_IMAGES; i++ )
 	{
-		waldo_images[i][0] = loadImage( "Pix/" + (i+1) + "/half.jpg" );
-		waldo_images[i][1] = loadImage( "Pix/" + (i+1) + "/original.jpg" );
-		waldo_images[i][2] = loadImage( "Pix/" + (i+1) + "/double.jpg" );
+		waldo_images[i] = loadImage( "Pix/" + (i+1) + "/original.jpg" );
 	}
 
 }
@@ -50,45 +98,72 @@ void setup()
 	// and make sure that it's always on top
 	// frame.setAlwaysOnTop(true);
 	frame.setLocation(0,0);
-	size( screenWidth, screenHeight, P3D );
+	size( screenWidth, screenHeight, OPENGL );
 	SMT.init(this, TouchSource.MULTIPLE);
-	int waldoWidth = 1700;
-	int waldoHeight = 2340;
+	SMT.setWarnUnimplemented( false );
 
+	// Set text-size (px)
+	textSize( TEXT_SIZE );
 
 	// Create Viewport
-	TextureZone tz = new TextureZone( "Viewport", screenWidth/4, screenHeight/4, screenWidth/2, screenHeight/2 );
-	SMT.add( tz );
+	// TextureZone tz = new NewTextureZone( "Viewport", screenWidth/4, screenHeight/4, screenWidth/4, screenHeight/4, SMT.defaultRenderer );
+	// SMT.add( tz );
 
-	// Load initial Waldo Image into ImageZone
-	ImageZone waldo = new ImageZone( "Waldo", waldo_images[curWaldoSet][curWaldoRes] );
+	// SMT.addChild( "Viewport", waldo );
 
-	SMT.addChild( "Viewport", waldo );
+	Viewport view1 = new Viewport( 0, screenWidth/4, screenHeight/4, screenWidth/4, screenHeight/4, SMT.defaultRenderer );
 
-	// Sliders are all on fourth screen in a vertical column
-	//	4 sliders:
-	//		-Viewport width
-	//		-Viewport height
-	//		-Waldo res
-	//		-Waldo set
+	// Load initial waldo image into ImageZone
+	ImageZone waldo = new ImageZone( "Waldo", waldo_images[curWaldoSet] );
+
+	// Add waldo image to first viewport
+	view1.addContent( waldo );
+
+	// Add first viewport to SMT
+	SMT.add( view1 );
+
+
+
+	/*
+	 *	Sliders are all on fourth screen in a vertical column
+	 *		4 sliders:
+	 *			-Viewport width
+	 *			-Viewport height
+	 *			-Waldo res
+	 *			-Waldo set
+	 *	Each slider is contained in a moveable Parent Zone that also contains a label
+	 */
 
 	// SliderZone( name, x, y, width, height, currentValue, minValue, maxValue, minorTickSpacing, majorTickSpacing, label )
-	int sliderWidth  = (screenWidth/4)  / 3;
-	int sliderHeight = (screenHeight/2) / 8;
-	int fourthScreenX = 3*screenWidth/4 + sliderWidth;
+	int sliderParentWidth  = 700;
+	int sliderParentHeight = 300;
+	int sliderWidth        = (screenWidth/4)  / 3;
+	int sliderHeight       = (screenHeight/2) / 8;
+	int fourthScreenX      = 3*screenWidth/4 + sliderWidth;
 
-	SMT.add( new SliderZone( "ViewportWidth", fourthScreenX, sliderHeight*0, 200, 200, screenWidth/4, screenWidth/8, screenWidth/2,
-								screenWidth/20, screenWidth/10, "Viewport Width" ) );
+	// Slider Parent Zones
+	SMT.add( new Zone( "ViewportWidthParent",  fourthScreenX, (int)( sliderParentHeight*0 ),   sliderParentWidth, sliderParentHeight ) );
+	SMT.add( new Zone( "ViewportHeightParent", fourthScreenX, (int)( sliderParentHeight*1.5 ), sliderParentWidth, sliderParentHeight ) );
+	SMT.add( new Zone( "WaldoResParent",       fourthScreenX, (int)( sliderParentHeight*3 ),   sliderParentWidth, sliderParentHeight ) );
+	SMT.add( new Zone( "WaldoSetParent",       fourthScreenX, (int)( sliderParentHeight*4.5 ), sliderParentWidth, sliderParentHeight ) );
 
-	SMT.add( new SliderZone( "ViewportHeight", fourthScreenX, sliderHeight*1, 200, 200, screenWidth/4, screenWidth/8, screenWidth/2,
-								screenWidth/20, screenWidth/10, "Viewport Height" ) );
+	// Add viewportWidth Slider
+	SliderZone viewportWidth =  new SliderZone( "ViewportWidth", 25, 100, sliderWidth, 200, screenWidth/4, screenWidth/8, 2*screenWidth/5,
+												screenWidth/20, screenWidth/10, "Viewport Width" );
+	SMT.addChild( "ViewportWidthParent", viewportWidth );
 
-	SMT.add( new SliderZone( "WaldoRes", fourthScreenX, sliderHeight*2, 200, 200, 1, 0, 2,
-								1, 1, "Waldo Resolution" ) );
+	// Add viewportHeight Slider
+	SliderZone viewportHeight = new SliderZone( "ViewportHeight", 25, 100, sliderWidth, 200, screenHeight/4, screenHeight/8, 4*screenHeight/5,
+												screenWidth/20, screenWidth/10, "Viewport Height" );
+	SMT.addChild( "ViewportHeightParent", viewportHeight );
 
-	SMT.add( new SliderZone( "WaldoSet", fourthScreenX, sliderHeight*3, 200, 200, curWaldoSet, 0, 2,
-								1, 1, "Waldo Image Set" ) );
+	// Add waldoRes Slider
+	SliderZone waldoRes = new SliderZone( "WaldoRes", 25, 100, sliderWidth, 200, STARTING_RESOLUTION_LEVEL, 1, 10, 1, 1, "Waldo Resolution" );
+	SMT.addChild( "WaldoResParent", waldoRes );
 
+	// Add waldoSet Slider
+	SliderZone waldoSet = new SliderZone( "WaldoSet", 25, 100, sliderWidth, 200, curWaldoSet, 0, 2, 1, 1, "Waldo Image Set" );
+	SMT.addChild( "WaldoSetParent", waldoSet );
 }
 
 
@@ -109,48 +184,93 @@ void draw()
 
 void drawViewport( Zone z )
 {
-
+	background( 0, 0, 0 );
 }
 
 void touchViewport( TextureZone tz )
 {
+	// tz.rst();
 	tz.drag();
 }
 
 // Waldo (ImageZone) Methods
 
+
 void touchWaldo( Zone z )
 {
-	z.rnt();
+	z.drag();
+	// z.rst();
 //  z.drag( true, true, true, true, -z.width + z.width/20, 2*z.width - z.width/20, -z.height + z.height/20, 2*z.height - z.height/10 );
 }
 
+// Slider and Slider Parent Methods:
+
+void drawViewportWidthParent( Zone z )
+{
+	background( 200, 20, 200 );
+	text( "Viewport Width", z.width/3, TEXT_SIZE );
+}
+
+void drawViewportHeightParent( Zone z )
+{
+	background( 200, 20, 200 );
+	text( "Viewport Height", z.width/3, TEXT_SIZE );
+}
+
+void drawWaldoResParent( Zone z )
+{
+	background( 200, 20, 200 );
+	text( "Waldo Image Resolution", z.width/3, TEXT_SIZE );
+
+}
+
+void drawWaldoSetParent( Zone z )
+{
+	background( 200, 20, 200 );
+	text( "Waldo Scene Selection", z.width/3, TEXT_SIZE );
+}
+
 //***************************
-//*   CONTROL ZONE METHODS
+//*   SLIDER ZONE METHODS
 //***************************
 
 
-void touchUpViewportWidth( SliderZone s, Touch t )
+// void touchUpViewportWidth( SliderZone s, Touch t )
+// {
+// 	boolean changeWidth = true;
+// 	adjustViewportDimension( changeWidth, s.getCurrentValue() );
+// }
+
+void touchMovedViewportWidth( SliderZone s, Touch t )
 {
 	boolean changeWidth = true;
 	adjustViewportDimension( changeWidth, s.getCurrentValue() );
 }
 
-void touchUpViewportHeight( SliderZone s, Touch t )
+// void touchUpViewportHeight( SliderZone s, Touch t )
+// {
+// 	boolean changeWidth = false;
+// 	adjustViewportDimension( changeWidth, s.getCurrentValue() );
+// }
+
+void touchMovedViewportHeight( SliderZone s, Touch t )
 {
 	boolean changeWidth = false;
 	adjustViewportDimension( changeWidth, s.getCurrentValue() );
 }
 
+int resolutionLevel = STARTING_RESOLUTION_LEVEL;
+
 void touchUpWaldoRes( SliderZone s, Touch t )
 {
-	boolean changingResolution = false;
-	changeImageZone( changingResolution, s.getCurrentValue() );
+	boolean changingResolution = true;
+	resolutionLevel = s.getCurrentValue();
+	changeImageZone( changingResolution, resolutionLevel );
 }
 
 void touchUpWaldoSet( SliderZone s, Touch t )
 {
-	boolean changingResolution = true;
+	boolean changingResolution = false;
 	changeImageZone( changingResolution, s.getCurrentValue() );
 }
 
@@ -172,20 +292,27 @@ void adjustViewportDimension( boolean changingWidth, int newVal )
 	int oldY      	= oldViewport.getY();
 
 	SMT.remove( "Viewport" );
-
 	// Create new viewport
-	TextureZone viewport;
-	if ( changingWidth )
-	{
-		viewport = new TextureZone( "Viewport", oldX, oldY, newVal, oldHeight );
-	}
-	else
-	{
-		viewport = new TextureZone( "Viewport", oldX, oldY, oldWidth, newVal );
-	}
+	// if ( ( newVal - oldHeight ) >= 20 || ( newVal - oldWidth ) >= 20 )
+	// {
+		if ( changingWidth )
+		{
+			// if ( newVal <= waldo.getWidth() )
+			// {
+				oldViewport.setData( oldX, oldY, newVal, oldHeight );
+			// }
+		}
+		else
+		{
+			// if ( newVal <= waldo.getHeight() )
+			// {
+				oldViewport.setData( oldX, oldY, oldWidth, newVal );
+			// }
+		}
+	// }
 
-	SMT.add( viewport );
-	SMT.addChild( "Viewport", waldo );
+	SMT.add( oldViewport );
+
 }
 
 void changeImageZone( boolean changingResolution, int index )
@@ -195,20 +322,30 @@ void changeImageZone( boolean changingResolution, int index )
 
 	if ( changingResolution )
 	{
-		waldo = new ImageZone( "Waldo", waldo_images[curWaldoSet][index] );
-		curWaldoRes = index;
+		PImage img = (PImage)waldo_images[curWaldoSet].get();
+		img.resize( (int)( (double)img.width * (double)((double)index/(double)STARTING_RESOLUTION_LEVEL) ), 0 );
+		waldo = new ImageZone( "Waldo", img );
+
+		// Track resolution level for switching between waldo scenes
+		resolutionLevel = index;
 	}
 	else
 	{
-		// HARDCODED SELECTION from set not ideal; find way to update slider from here or obtain slider val
-		waldo = new ImageZone( "Waldo", waldo_images[index][curWaldoRes] );
+		PImage img = (PImage)waldo_images[index].get();
+		img.resize( (int)( (double)img.width * (double)((double)resolutionLevel/(double)STARTING_RESOLUTION_LEVEL) ), 0 );
+		waldo = new ImageZone( "Waldo", img );
+
+		// Track current Waldo scene in used
         curWaldoSet = index;
 	}
 	SMT.addChild( "Viewport", waldo );
 }
 
 
+
+
 // @TODO
-// 	-investigate why viewport disappears when changed by sliders -- print values
-//      -see if smoother resolution transitions are possible
+//	WANTS
+//  - Define 5 as some kind of constant for (global res var and initializing first waldo image and resizing)
+//	- If I could scope resolutionLeve and curWaldoSet within that function (functor?)
 
