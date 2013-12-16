@@ -1,0 +1,32 @@
+/*******************************************************************************************/
+// Init & Setup Methods
+/*******************************************************************************************/
+//  We use init here to allow us to remove the Window's decorations
+//  before it is too late in the Setup method
+//
+//  This is a work around for not being able to use the fullScreen mode
+//  across multiple displays
+//
+public void init()
+{
+	// to make a frame not displayable, you can
+	// use frame.removeNotify()
+
+	frame.removeNotify();
+	frame.setUndecorated(true);
+
+	// addNotify, here i am not sure if you have
+	// to add notify again.
+	//  frame.addNotify();
+	// frame.removeNotify();
+	super.init();
+}
+
+void setup()
+{
+	// Place the window in the top left corner,
+	// and make sure that it's always on top
+	// frame.setAlwaysOnTop(true);
+	frame.setLocation(0,0);
+	size( screenWidth, screenHeight, OPENGL );
+}
