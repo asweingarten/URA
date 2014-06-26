@@ -1,13 +1,6 @@
 import vialab.SMT.*;
 import java.util.*;
 
-// Status
-//  - Touch points only accurate when using mouse
-//     using fingers is wayyyy off
-//  - When placement zone is green, should set flag for
-//    backgroundZoneTouchUp to place viewport
-
-
 /**
  *  Global Variables
 **/
