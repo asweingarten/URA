@@ -38,3 +38,19 @@ Breakdown of Source Code:
 
  - Main.pde
  	Sets up the Processing Sketch
+
+
+
+ TODO:
+  - Try implementing auxilliary control zone
+  	- Touch gestures in there get applied to viewport/content, but don't affect
+  		the control zone itself
+
+
+
+Things we want to do in the study:
+
+	- Want to look at how people can walk up to the screen, "carve out" a space. Log initial size.
+		- They should have some expectation of what they'll be doing with the space (i.e. what task are they performing)
+
+
