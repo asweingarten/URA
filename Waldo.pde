@@ -3,6 +3,9 @@ void touchWaldo( Zone z )
     if ( canWaldoBeTouched )
     {
       z.rst( false, true, true );
+      z.getParent().translate(0,0,-1);
+      z.translate(0,0,1);
+      SMT.get("BackgroundZone").translate(0,0,-1);
     }
 }
 
