@@ -24,8 +24,9 @@ public class Viewport extends NewTextureZone
 {
   Viewport( int id, int x, int y, int width, int height )
   {
-    super( "Viewport" , x, y, width, height, SMT.RENDERER );
+    super( "Viewport" + id, x, y, width, height, SMT.RENDERER );
 //    this.scaleBackBuffer = true;
+
 
   }
 
@@ -36,6 +37,10 @@ public class Viewport extends NewTextureZone
   public void addContent( Zone content )
   {
     SMT.addChild( getName(), content );
+    this.translate( 0, 0, -1 );
+    this.getChildren()[0].translate( 0, 0, 1 );
+    SMT.get("BackgroundZone").translate(0,0,-1);
+    System.out.println("Child added: " + this.getChildren()[0].getName() );
   }
 
   //  Description:
