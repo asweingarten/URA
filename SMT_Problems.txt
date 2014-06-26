@@ -1,2 +1,0 @@
-No way to disable minor/major ticks on SliderZones. If you provide 0 as a parameter, then it should disable ticks rather than throwing
-a divide by 0 error.
