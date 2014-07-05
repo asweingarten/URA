@@ -148,7 +148,35 @@ void touchUpBackgroundZone(Zone z, Touch t)
 
     SMT.add( view );
 
-    ImageZone waldo = new ImageZone( "Waldo", waldo_images[curWaldoSet], 100, 50 );
-    view.addContent( waldo );
+    PImage waldoImageClone = waldo_images[curWaldoSet].get();
+    ImageZone waldoImageZone;
+
+    if ( view.getHeight() < view.getWidth() )
+    {
+      // Viewport is wider than tall (widescreen)
+      int waldoHeight = (int)Math.round(view.getHeight()*0.8),
+          waldoYMargin = (int)Math.round(view.getHeight()*0.1),
+          waldoXMargin;
+
+      waldoImageClone.resize( 0, waldoHeight );
+
+      waldoXMargin = (int)Math.round( (view.getWidth() - waldoImageClone.width) / 2 );
+      waldoImageZone = new ImageZone( "Waldo", waldoImageClone, waldoXMargin, waldoYMargin );
+    }
+    else
+    {
+      // Viewport is taller than wide (like a vertical smartphone)
+      int waldoWidth  = (int)Math.round(view.getWidth()*0.8),
+          waldoXMargin = (int)Math.round(view.getWidth()*0.1),
+          waldoYMargin;
+
+      waldoImageClone.resize( waldoWidth, 0 );
+
+      waldoYMargin = (int)Math.round( (view.getHeight() - waldoImageClone.height) / 2 );
+      waldoImageZone = new ImageZone( "Waldo", waldoImageClone, waldoXMargin, waldoYMargin );
+
+    }
+
+    view.addContent( waldoImageZone );
   }
 }
