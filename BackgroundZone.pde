@@ -173,7 +173,8 @@ void touchUpBackgroundZone(Zone z, Touch t)
       waldoImageClone.resize( waldoWidth, 0 );
 
       waldoYMargin = (int)Math.round( (view.getHeight() - waldoImageClone.height) / 2 );
-      waldoImageZone = new ImageZone( "Waldo", waldoImageClone, waldoXMargin, waldoYMargin );
+      waldoImageZone = new ImageZone( "Waldo", waldo_images[curWaldoSet].get(), waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
+      waldoImageZone.refreshResolution();
 
     }
 

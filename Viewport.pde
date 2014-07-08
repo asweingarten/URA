@@ -1,6 +1,7 @@
 boolean canWaldoBeTouched = true;
 boolean canViewportBeTouched = true;
 
+import java.awt.Dimension;
 
 // Parent class of Viewport
 public class NewTextureZone extends TextureZone
@@ -22,12 +23,48 @@ public class NewTextureZone extends TextureZone
 
 public class Viewport extends NewTextureZone
 {
+  public float lastScaleX,
+               lastScaleY;
+
   Viewport( int id, int x, int y, int width, int height )
   {
     super( "Viewport" + id, x, y, width, height, SMT.RENDERER );
-//    this.scaleBackBuffer = true;
+    lastScaleX = 1;
+    lastScaleY = 1;
+  }
 
+  //  Description:
+  //    Gets the delta scaling amount from last time this has been called
+  public float getInverseScale()
+  {
+    PMatrix3D global = getGlobalMatrix();
+    //origin vector
+    PVector o1 = new PVector( 0, 0);
+    //x unit vector
+    PVector x1 = new PVector( 1, 0);
+    //y unit vector
+    PVector y1 = new PVector( 0, 1);
+    //y unit vector
+    PVector z1 = new PVector( 0, 0, 1);
+    //apply matrix
+    PVector o2 = global.mult( o1, null);
+    PVector x2 = global.mult( x1, null);
+    PVector y2 = global.mult( y1, null);
+    PVector z2 = global.mult( z1, null);
+    //extract scaling factors
+    float x_scale = o2.dist( x2);
+    float y_scale = o2.dist( y2);
+    float z_scale = o2.dist( z2);
 
+    if ( lastScaleX == x_scale )
+    {
+      System.out.println("returning 0");
+      return 0;
+    }
+
+    float tempScale = lastScaleX;
+    lastScaleX = x_scale;
+    return tempScale / x_scale;
   }
 
   //  Description:
@@ -72,7 +109,21 @@ void drawViewport( Zone z )
 void touchViewport( Viewport vp )
 {
   vp.rst( false, true, true );
-  // vp.drag();
+
+  float inverseScale = vp.getInverseScale();
+
+  if ( inverseScale != 0 )
+  {
+    ImageZone waldo = (ImageZone)vp.getChildren()[0];
+    PImage img = waldo.getZoneImage().get();
+    // img.resize( (int)Math.round(deltaScale*waldo.width), (int)Math.round(deltaScale*waldo.height) );
+    waldo.scale(inverseScale, inverseScale);
+    // waldo.width  = Math.round( deltaScale*waldo.getWidth() );
+    // waldo.height = Math.round( deltaScale*waldo.getHeight() );
+    // waldo.setZoneImage(img);
+  }
+  System.out.println( "scaleX: " + inverseScale + " | scaleY: " + inverseScale );
+
 }
 
 //  Description:
@@ -81,7 +132,6 @@ void touchViewport( Viewport vp )
 //    Viewport vp : the viewport being touched
 void touchDownViewport( Viewport vp )
 {
-
   if ( !canViewportBeTouched )
   {
     return;
@@ -93,6 +143,7 @@ void touchDownViewport( Viewport vp )
 
 void touchUpViewport( Viewport vp )
 {
+  vp.refreshResolution();
 
   if ( !canViewportBeTouched )
   {

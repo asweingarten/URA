@@ -64,17 +64,17 @@ void setup()
   SMT.add( new Zone( "BackgroundZone", 0, 0, screenWidth, screenHeight ) );
 
   // Create first viewport
-  Viewport view0 = new Viewport( nextViewPortID, screenWidth/4, screenHeight/4, DEFAULT_VIEWPORT_WIDTH, DEFAULT_VIEWPORT_HEIGHT );
+//  Viewport view0 = new Viewport( nextViewPortID, screenWidth/4, screenHeight/4, DEFAULT_VIEWPORT_WIDTH, DEFAULT_VIEWPORT_HEIGHT );
 
-  viewports.add( view0 );
+//  viewports.add( view0 );
   nextViewPortID += 1;
 
   // Add first viewport to SMT
-  SMT.add( view0 );
+//  SMT.add( view0 );
 
   // Create ImageZone for first Waldo image and add to init viewport
-  ImageZone waldo = new ImageZone( "Waldo", waldo_images[curWaldoSet], 100, 50 );
-  view0.addContent( waldo );
+//  ImageZone waldo = new ImageZone( "Waldo", waldo_images[curWaldoSet], 100, 50 );
+//  view0.addContent( waldo );
 }
 
 void draw()
