@@ -13,7 +13,7 @@ int placementX,
 
 void drawBackgroundZone( Zone z )
 {
-  background( 35, 35, 125 );
+  background( 0 );
 }
 
 
@@ -161,7 +161,7 @@ void touchUpBackgroundZone(Zone z, Touch t)
       waldoImageClone.resize( 0, waldoHeight );
 
       waldoXMargin = (int)Math.round( (view.getWidth() - waldoImageClone.width) / 2 );
-      waldoImageZone = new ImageZone( "Waldo", waldoImageClone, waldoXMargin, waldoYMargin );
+      waldoImageZone = new ImageZone( "Waldo", waldoImageClone, waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
     }
     else
     {
@@ -174,10 +174,12 @@ void touchUpBackgroundZone(Zone z, Touch t)
 
       waldoYMargin = (int)Math.round( (view.getHeight() - waldoImageClone.height) / 2 );
       waldoImageZone = new ImageZone( "Waldo", waldo_images[curWaldoSet].get(), waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
-      waldoImageZone.refreshResolution();
-
     }
+    logger.logEvent( "New View: " + view.getName(),
+                     "(X,Y) : (" + viewX + "," + viewY + ")",
+                     "(W,H,AR) : (" + viewWidth + "," + viewHeight + "," + (float)viewWidth/(float)viewHeight );
 
+    waldoImageZone.refreshResolution();
     view.addContent( waldoImageZone );
   }
 }
