@@ -50,6 +50,7 @@ void setup()
   frame.setLocation(0,0);
   size( screenWidth, screenHeight, SMT.RENDERER );
   SMT.init(this, TouchSource.MULTIPLE);
+  SMT.setTouchSourceBoundsScreen();
   SMT.setWarnUnimplemented( false );
 
   // Setup Logger
