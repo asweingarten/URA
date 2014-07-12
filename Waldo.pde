@@ -9,7 +9,7 @@ void touchWaldo( Zone z )
     }
 }
 
-void touchDownWaldo( Zone z )
+void touchDownWaldo( ImageZone waldo )
 {
   canViewportBeTouched = false;
 }
@@ -26,6 +26,7 @@ void touchUpWaldo( ImageZone waldo )
   Viewport vp = (Viewport)waldo.getParent();
   Dimension waldoDim = waldo.getScreenSize(),
             viewDim = vp.getScreenSize();
+
   logger.logEvent( "Touch Up View : " + vp.getName(),
                    "View: " +
                       "(X,Y) : (" +
@@ -44,7 +45,7 @@ void touchUpWaldo( ImageZone waldo )
                           waldoDim.getHeight() + "," +
                           (float)waldoDim.getWidth()/(float)waldoDim.getHeight()
                     );
-  waldo.refreshResolution();
+  // waldo.refreshResolution();
 }
 
 
