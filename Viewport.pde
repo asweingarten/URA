@@ -26,11 +26,15 @@ public class Viewport extends NewTextureZone
   public float lastScaleX,
                lastScaleY;
 
+  public int greyVal;
+
   Viewport( int id, int x, int y, int width, int height )
   {
     super( "Viewport" + id, x, y, width, height, SMT.RENDERER );
     lastScaleX = 1;
     lastScaleY = 1;
+
+    this.greyVal = int(random(0, 8))*25 + 50;
   }
 
   //  Description:
@@ -58,7 +62,7 @@ public class Viewport extends NewTextureZone
 
     if ( lastScaleX == x_scale )
     {
-      System.out.println("returning 0");
+      // System.out.println("returning 0");
       return 0;
     }
 
@@ -95,10 +99,13 @@ public class Viewport extends NewTextureZone
 //    How the viewport is drawn
 //  Input:
 //    Zone z : the viewport zone
-void drawViewport( Zone z )
+void drawViewport( Viewport vp )
 {
-  fill(0);
-  rect( 0, 0, z.getWidth()*100, z.getHeight()*100 );
+  stroke(255);
+  strokeWeight(2);
+
+  fill( vp.greyVal, vp.greyVal, vp.greyVal, vp.greyVal  );
+  rect( 0, 0, vp.getWidth()*100, vp.getHeight()*100, 30, 30, 30, 30 );
   // background(0);
 }
 
@@ -108,22 +115,16 @@ void drawViewport( Zone z )
 //    Viewport vp : the viewport being touched
 void touchViewport( Viewport vp )
 {
-  vp.rst( false, true, true );
+  ImageZone waldo = (ImageZone)vp.getChildren()[0];
 
+  vp.rst( false, true, true );
   float inverseScale = vp.getInverseScale();
 
   if ( inverseScale != 0 )
   {
-    ImageZone waldo = (ImageZone)vp.getChildren()[0];
-    PImage img = waldo.getZoneImage().get();
-    // img.resize( (int)Math.round(deltaScale*waldo.width), (int)Math.round(deltaScale*waldo.height) );
     waldo.scale(inverseScale, inverseScale);
-    // waldo.width  = Math.round( deltaScale*waldo.getWidth() );
-    // waldo.height = Math.round( deltaScale*waldo.getHeight() );
-    // waldo.setZoneImage(img);
+    // waldo.setSize( (int)waldoDim.getWidth(), (int)waldoDim.getHeight() );
   }
-  System.out.println( "scaleX: " + inverseScale + " | scaleY: " + inverseScale );
-
 }
 
 //  Description:
@@ -138,13 +139,12 @@ void touchDownViewport( Viewport vp )
   }
   //System.out.println("Waldo is NOT active");
   canWaldoBeTouched = false;
-
 }
 
 void touchUpViewport( Viewport vp )
 {
   vp.refreshResolution();
-
+  // log here
   if ( !canViewportBeTouched )
   {
     return;
@@ -157,22 +157,31 @@ void touchUpViewport( Viewport vp )
   vp.getChildren()[0].translate(0,0,1);
   SMT.get("BackgroundZone").translate(0,0,-1);
 
-  // Change the waldo image to avoid zone "freezing"
-  // ImageZone waldo = (ImageZone)vp.getChildren()[0];
+  ImageZone waldo    = (ImageZone)vp.getChildren()[0];
+  Dimension viewDim  = vp.getScreenSize(),
+            waldoDim = waldo.getScreenSize();
 
-  // int x = waldo.getX() - vp.getX(),
-  //     y = waldo.getY() - vp.getY(),
-  //     waldoWidth = waldo.getWidth(),
-  //     waldoHeight = waldo.getHeight();
+  // System.out.println( "Touch Up View: " + waldoDim.getWidth() + "|" + waldoDim.getHeight() );
 
-  // System.out.println( "x: " + x + " y: " + y + " width: " + waldoWidth + " height: " + waldoHeight );
+  logger.logEvent( "Touch Up View : " + vp.getName(),
+                   "View: " +
+                      "(X,Y) : (" +
+                        vp.x + "," +
+                        vp.y + ") "  +
+                      "(W,H,AR) : (" +
+                        viewDim.getWidth() + "," +
+                        viewDim.getHeight() + "," +
+                        (float)viewDim.getWidth()/(float)viewDim.getHeight(),
+                    "Waldo: " +
+                       "(X,Y) : (" +
+                          waldo.x + "," +
+                          waldo.y + ") " +
+                       "(W,H,AR) : (" +
+                          waldoDim.getWidth() + "," +
+                          waldoDim.getHeight() + "," +
+                          (float)waldoDim.getWidth()/(float)waldoDim.getHeight()
+                    );
 
-  // changeImageZone( vp, x, y, waldoWidth, waldoHeight );
-
-  // waldo = (ImageZone)vp.getChildren()[0];
-  // waldo.setData( x, y, waldoWidth, waldoHeight );
-
-  logger.logEvent( "Viewport", "Touch Up", "Hide handles and update tiles" );
 }
 
 
