@@ -1,13 +1,20 @@
-Touch windowOrigin = null;
-boolean drawingRectangle = false,
-        canPlaceNewViewport = false;;
-int placementX,
-    placementY,
-    placementCursorID,
-    viewX = 0,
-    viewY = 0,
-    viewWidth = 0,
-    viewHeight = 0;
+import java.util.Map;
+
+public class Tuple
+{
+  public int x;
+  public int y;
+  public Tuple(int x, int y)
+  {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+Map<Integer, Tuple> placementCoords = new HashMap<Integer, Tuple>();
+Map<Integer, Zone> placementZones = new HashMap<Integer, Zone>();
+Map<Integer, Tuple> viewCoords = new HashMap<Integer, Tuple>();
+Map<Integer, Tuple> viewDims = new HashMap<Integer, Tuple>();
 
 
 
@@ -21,58 +28,64 @@ void touchDownBackgroundZone(Zone z, Touch t )
 {
   System.out.println("DOWN");
 
-  if ( !drawingRectangle )
+  // if Touch t is not too close to any other touch
+  Touch[] touches = z.getTouches();
+  for ( Touch touch : touches )
   {
-    drawingRectangle = true;
-    placementX = t.x;
-    placementY = t.y;
-    placementCursorID = t.cursorID;
-    System.out.println( "drawing Rectangle TRUE" );
+    TouchPair pair = new TouchPair( t, touch );
+    PVector toVec = pair.getToVec(),
+            fromVec = pair.getFromVec();
+
+    float distance = toVec.dist(fromVec);
+    if ( distance < 200 && distance != 0 )
+      return;
   }
+
+  placementCoords.put( t.cursorID, new Tuple( t.x, t.y ) );
 }
 
 void touchBackgroundZone( Zone z )
 {
   Touch[] touches = z.getTouches();
-  Touch t = null;
-  for ( Touch touch :  touches )
+  for ( Touch touch : touches )
   {
-    if ( touch.cursorID == placementCursorID )
+    if ( placementCoords.containsKey( touch.cursorID ) )
     {
-      t = touch;
+      if ( placementZones.containsKey( touch.cursorID ) )
+      {
+        Zone pZone = placementZones.get( touch.cursorID );
+        SMT.remove( pZone );
+      }
+      spawnPlacementZone( touch );
     }
-  }
-  if ( t != null )
-  {
-
-    SMT.remove( "PlacementZone" );
-    if ( SMT.get( "PlacementZone" ) == null )
-    {
-      spawnPlacementZone( t );
-    }
-
   }
 
 }
 
 void spawnPlacementZone( Touch t )
 {
-  // System.out.println( "touchy: " + t.x + " " + t.y );
-  int placementWidth  = Math.abs( placementX - t.x ),
+  Tuple placementCoordinates = placementCoords.get( t.cursorID );
+
+  int placementX = placementCoordinates.x,
+      placementY = placementCoordinates.y,
+      placementWidth  = Math.abs( placementX - t.x ),
       placementHeight = Math.abs( placementY - t.y );
 
-  viewWidth    = placementWidth;
-  viewHeight = placementHeight;
+  viewDims.put( t.cursorID, new Tuple( placementWidth, placementHeight ) );
+
+  int viewX = 0,
+      viewY = 0;
+
+  Zone placementZone = new Zone();
 
   if ( placementX > t.x && placementY > t.y )
   {
     // Dragged left and up
-    SMT.add( new Zone( "PlacementZone",
+    placementZone = new Zone( "PlacementZone",
                        t.x,
                        t.y,
                        placementWidth,
-                       placementHeight )
-            );
+                       placementHeight );
     // System.out.println( "Left and Up" );
     viewX = t.x;
     viewY = t.y;
@@ -80,25 +93,23 @@ void spawnPlacementZone( Touch t )
   else if ( placementX > t.x && placementY < t.y )
   {
     // Dragged left and down
-    SMT.add( new Zone( "PlacementZone",
+    placementZone = new Zone( "PlacementZone",
                        t.x,
                        placementY,
                        placementWidth,
-                       placementHeight )
-            );
-    System.out.println( "Left and Down" );
+                       placementHeight );
+    // System.out.println( "Left and Down" );
     viewX = t.x;
     viewY = placementY;
   }
   else if ( placementX < t.x && placementY < t.y )
   {
     // Dragged right and down
-    SMT.add( new Zone( "PlacementZone",
+    placementZone = new Zone( "PlacementZone",
                        placementX,
                        placementY,
                        placementWidth,
-                       placementHeight )
-            );
+                       placementHeight );
     // System.out.println( "Right and Down" );
     viewX = placementX;
     viewY = placementY;
@@ -106,16 +117,19 @@ void spawnPlacementZone( Touch t )
   else if ( placementX < t.x && placementY > t.y )
   {
     // Dragged right and up
-    SMT.add( new Zone( "PlacementZone",
+    placementZone = new Zone( "PlacementZone",
                        placementX,
                        t.y,
                        placementWidth,
-                       placementHeight )
-            );
+                       placementHeight );
     // System.out.println( "Right and Up" );
     viewX = placementX;
     viewY = t.y;
   }
+
+  SMT.add( placementZone );
+  placementZones.put( t.cursorID, placementZone );
+  viewCoords.put( t.cursorID, new Tuple( viewX, viewY ) );
 }
 
 void drawPlacementZone( Zone z )
@@ -124,62 +138,72 @@ void drawPlacementZone( Zone z )
   {
     // too small; show red
     fill( 255, 0, 0 );
-    canPlaceNewViewport = false;
   }
   else
   {
     // acceptable size; show green
     fill( 0, 255, 0 );
-    canPlaceNewViewport = true;
   }
   rect( 0, 0, z.getWidth(), z.getHeight() );
 }
 
 void touchUpBackgroundZone(Zone z, Touch t)
 {
-  // System.out.println( "Touch Up on BZ" );
-  drawingRectangle = false;
-  SMT.remove( "PlacementZone" );
-
-  if ( canPlaceNewViewport )
+  if ( placementZones.containsKey( t.cursorID ) )
   {
-    Viewport view = new Viewport( nextViewPortID, viewX, viewY, viewWidth, viewHeight );
-    nextViewPortID += 1;
+    Tuple viewCoordinates = viewCoords.get( t.cursorID ),
+          viewDimensions  = viewDims.get( t.cursorID );
 
-    SMT.add( view );
+    int viewX = viewCoordinates.x,
+        viewY = viewCoordinates.y,
+        viewWidth  = viewDimensions.x,
+        viewHeight = viewDimensions.y;
 
-    PImage waldoImageClone = waldo_images[curWaldoSet].get();
-    ImageZone waldoImageZone;
+    Zone placementZone = placementZones.get( t.cursorID );
+    SMT.remove( placementZone );
 
-    if ( view.getHeight() < view.getWidth() )
+    if ( viewWidth >= 400 && viewHeight >= 400 )
     {
-      // Viewport is wider than tall (widescreen)
-      int waldoHeight = (int)Math.round(view.getHeight()*0.8),
-          waldoYMargin = (int)Math.round(view.getHeight()*0.1),
-          waldoXMargin;
+      Viewport view = new Viewport( nextViewPortID, viewX, viewY, viewWidth, viewHeight );
+      nextViewPortID++;
+      SMT.add( view );
 
-      waldoImageClone.resize( 0, waldoHeight );
+      PImage waldoSourceImage = waldo_images[curWaldoSet].get(),
+             waldoImageClone = waldo_images[curWaldoSet].get();
+      ImageZone waldoImageZone;
 
-      waldoXMargin = (int)Math.round( (view.getWidth() - waldoImageClone.width) / 2 );
-      waldoImageZone = new ImageZone( "Waldo", waldoImageClone, waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
+      if ( viewHeight < viewWidth )
+      {
+        // Viewport is wider than tall (widescreen)
+        int waldoHeight = (int)Math.round((float)viewHeight*0.8),
+            waldoYMargin = (int)Math.round((float)viewHeight*0.1),
+            waldoXMargin;
+
+        waldoImageClone.resize( 0, waldoHeight );
+        waldoXMargin = (int)Math.round( ((float)viewWidth - waldoImageClone.width ) /2 );
+        waldoImageZone = new ImageZone( "Waldo", waldoSourceImage, waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
+      }
+      else
+      {
+        // Viewport is taller than wide (like a vertical smartphone)
+        int waldoWidth = (int)Math.round((float)viewWidth*0.8),
+            waldoXMargin = (int)Math.round((float)viewWidth*0.1),
+            waldoYMargin;
+
+        waldoImageClone.resize( waldoWidth, 0 );
+
+        waldoYMargin = (int)Math.round( ((float)viewHeight - waldoImageClone.height) / 2 );
+        waldoImageZone = new ImageZone( "Waldo", waldoSourceImage, waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
+      }
+
+
+      logger.logEvent( "New View: " + view.getName(),
+                       "(X,Y) : (" + viewX + "," + viewY + ")",
+                       "(W,H,AR) : (" + viewWidth + "," + viewHeight + "," + (float)viewWidth/(float)viewHeight );
+
+      waldoImageZone.refreshResolution();
+      view.addContent( waldoImageZone );
     }
-    else
-    {
-      // Viewport is taller than wide (like a vertical smartphone)
-      int waldoWidth  = (int)Math.round(view.getWidth()*0.8),
-          waldoXMargin = (int)Math.round(view.getWidth()*0.1),
-          waldoYMargin;
 
-      waldoImageClone.resize( waldoWidth, 0 );
-
-      waldoYMargin = (int)Math.round( (view.getHeight() - waldoImageClone.height) / 2 );
-      waldoImageZone = new ImageZone( "Waldo", waldo_images[curWaldoSet].get(), waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
-    }
-    logger.logEvent( "New View: " + view.getName(),
-                     "(X,Y) : (" + viewX + "," + viewY + ")",
-                     "(W,H,AR) : (" + viewWidth + "," + viewHeight + "," + (float)viewWidth/(float)viewHeight );
-
-    waldoImageZone.refreshResolution();
-    view.addContent( waldoImageZone );
   }
 }
