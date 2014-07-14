@@ -2,6 +2,7 @@ boolean canWaldoBeTouched = true;
 boolean canViewportBeTouched = true;
 
 import java.awt.Dimension;
+import java.lang.Thread;
 
 // Parent class of Viewport
 public class NewTextureZone extends TextureZone
@@ -28,6 +29,8 @@ public class Viewport extends NewTextureZone
 
   public int greyVal;
 
+  public boolean wasScaled;
+
   Viewport( int id, int x, int y, int width, int height )
   {
     super( "Viewport" + id, x, y, width, height, SMT.RENDERER );
@@ -35,6 +38,7 @@ public class Viewport extends NewTextureZone
     lastScaleY = 1;
 
     this.greyVal = int(random(0, 8))*25 + 50;
+    this.wasScaled = false;
   }
 
   //  Description:
@@ -123,6 +127,7 @@ void touchViewport( Viewport vp )
   if ( inverseScale != 0 )
   {
     waldo.scale(inverseScale, inverseScale);
+    vp.wasScaled = true;
     // waldo.setSize( (int)waldoDim.getWidth(), (int)waldoDim.getHeight() );
   }
 }
@@ -143,8 +148,20 @@ void touchDownViewport( Viewport vp )
 
 void touchUpViewport( Viewport vp )
 {
-  vp.refreshResolution();
-  // log here
+  if ( vp.wasScaled )
+  {
+    final Viewport vpInThread = vp;
+    Thread refreshThread = new Thread( "Viewport Refresh Thread" )
+    {
+      public void run()
+      {
+        vpInThread.refreshResolution();
+      }
+    };
+    refreshThread.start();
+    vp.wasScaled = false;
+  }
+
   if ( !canViewportBeTouched )
   {
     return;
