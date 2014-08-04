@@ -37,7 +37,7 @@ void touchDownBackgroundZone(Zone z, Touch t )
             fromVec = pair.getFromVec();
 
     float distance = toVec.dist(fromVec);
-    if ( distance < 200 && distance != 0 )
+    if ( distance < 400 && distance != 0 )
       return;
   }
 
@@ -164,9 +164,9 @@ void touchUpBackgroundZone(Zone z, Touch t)
 
     if ( viewWidth >= 400 && viewHeight >= 400 )
     {
-      Viewport view = new Viewport( nextViewPortID, viewX, viewY, viewWidth, viewHeight );
+      Viewport vp = new Viewport( nextViewPortID, viewX, viewY, viewWidth, viewHeight );
       nextViewPortID++;
-      SMT.add( view );
+      SMT.add( vp );
 
       PImage waldoSourceImage = waldo_images[curWaldoSet].get(),
              waldoImageClone = waldo_images[curWaldoSet].get();
@@ -196,13 +196,31 @@ void touchUpBackgroundZone(Zone z, Touch t)
         waldoImageZone = new ImageZone( "Waldo", waldoSourceImage, waldoXMargin, waldoYMargin, waldoImageClone.width, waldoImageClone.height );
       }
 
-
-      logger.logEvent( "New View: " + view.getName(),
-                       "(X,Y) : (" + viewX + "," + viewY + ")",
-                       "(W,H,AR) : (" + viewWidth + "," + viewHeight + "," + (float)viewWidth/(float)viewHeight );
+      Dimension viewDim  = vp.getScreenSize(),
+                waldoDim = waldoImageZone.getScreenSize();
 
       waldoImageZone.refreshResolution();
-      view.addContent( waldoImageZone );
+      vp.addContent( waldoImageZone );
+
+      logger.logEvent( "New View : " + vp.getName(),
+                       "View: " +
+                          "(X,Y) : (" +
+                            vp.getX() + "," +
+                            vp.getY() + ") "  +
+                          "(W,H,AR) : (" +
+                            viewDim.getWidth() + "," +
+                            viewDim.getHeight() + "," +
+                            (float)viewDim.getWidth()/(float)viewDim.getHeight(),
+                        "Waldo: " +
+                           "(X,Y) : (" +
+                              waldoImageZone.getX() + "," +
+                              waldoImageZone.getY() + ") " +
+                           "(W,H,AR) : (" +
+                              waldoDim.getWidth() + "," +
+                              waldoDim.getHeight() + "," +
+                              (float)waldoDim.getWidth()/(float)waldoDim.getHeight()
+                        );
+
     }
 
   }

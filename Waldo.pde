@@ -30,16 +30,16 @@ void touchUpWaldo( ImageZone waldo )
   logger.logEvent( "Touch Up View : " + vp.getName(),
                    "View: " +
                       "(X,Y) : (" +
-                        vp.x + "," +
-                        vp.y + ") "  +
+                        vp.getX() + "," +
+                        vp.getY() + ") "  +
                       "(W,H,AR) : (" +
                         viewDim.getWidth() + "," +
                         viewDim.getHeight() + "," +
                         (float)viewDim.getWidth()/(float)viewDim.getHeight(),
                     "Waldo: " +
                        "(X,Y) : (" +
-                          waldo.x + "," +
-                          waldo.y + ") " +
+                          waldo.getX() + "," +
+                          waldo.getY() + ") " +
                        "(W,H,AR) : (" +
                           waldoDim.getWidth() + "," +
                           waldoDim.getHeight() + "," +
